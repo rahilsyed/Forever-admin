@@ -31,15 +31,20 @@ const Orders = ({ token }) => {
   }
 
   const statusHandler = async (event, orderId) => {
+    const newStatus = event.target.value;
     try {
-      const response = await axios.post(backendUrl + '/api/order/status', { orderId, status: event.target.value }, { headers: { token } })
-      if (response.data.success) {
-        await fetchAllOrders()
-
+      const response = await axios.post(backendUrl + '/api/orders/status', { orderId, status: newStatus }, { headers: { token } })
+      if (response.status === 200) {
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order._id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+        await fetchAllOrders();
       }
     } catch (error) {
       console.log(error);
-      toast.error(response.data.message)
+      toast.error(error.message);
     }
   }
 
@@ -79,7 +84,8 @@ const Orders = ({ token }) => {
               <div>
                 <p className="text-sm sm:text-[15px]">Items : {order.items.length}</p>
                 <p className="mt-3">Method : {order.paymentMethod}</p>
-                <p>Payment : {order.payment ? "Done" : "Pending"} </p>
+                <p>Payment Status: {order.paymentMode == "Stripe" ? "Paid" : "Pending" } </p>
+                <p>Payment Mode: {order.paymentMode } </p>
                 <p>Date : {new Date(order.date).toLocaleDateString()}</p>
               </div>
               <p className="text-sm sm:text-[15px]">{currency}{order.amount}</p>
